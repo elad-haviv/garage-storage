@@ -1,0 +1,66 @@
+# Garage S3-compatible object storage — single-node deployment for Coolify
+# Image pinned to a fixed release tag (per Garage docs recommendation).
+# All secrets/credentials are supplied by Coolify environment variables:
+#   GARAGE_ADMIN_TOKEN - bearer token for the admin API (also used by the UI)
+#   GARAGE_RPC_SECRET  - internal RPC secret (single node; required by Garage)
+# Domains are routed via Traefik labels (required for compose apps on Coolify:
+# docker_compose_domains is rejected by the API on create).
+
+services:
+  garage:
+    image: dxflrs/garage:v2.3.0
+    container_name: garage-storage
+    restart: unless-stopped
+    command: server
+    environment:
+      - GARAGE_CONFIG_FILE=/etc/garage.toml
+      - GARAGE_ADMIN_TOKEN=${GARAGE_ADMIN_TOKEN}
+      - GARAGE_RPC_SECRET=${GARAGE_RPC_SECRET}
+    configs:
+      - source: garage_toml
+        target: /etc/garage.toml
+    volumes:
+      - garage_meta:/var/lib/garage/meta
+      - garage_data:/var/lib/garage/data
+    labels:
+      - traefik.enable=true
+      # ---- S3 API (path-style: https://s3.haviv.pro/<bucket>/<key>) ----
+      - traefik.http.routers.garage-s3.rule=Host(`s3.haviv.pro`)
+      - traefik.http.routers.garage-s3.entrypoints=https
+      - traefik.http.routers.garage-s3.tls.certresolver=letsencrypt
+      - traefik.http.routers.garage-s3.service=garage-s3
+      - traefik.http.services.garage-s3.loadbalancer.server.port=3900
+      # ---- Admin API + built-in web UI ----
+      - traefik.http.routers.garage-admin.rule=Host(`garage-admin.haviv.pro`)
+      - traefik.http.routers.garage-admin.entrypoints=https
+      - traefik.http.routers.garage-admin.tls.certresolver=letsencrypt
+      - traefik.http.routers.garage-admin.service=garage-admin
+      - traefik.http.services.garage-admin.loadbalancer.server.port=3903
+
+configs:
+  garage_toml:
+    content: |
+      metadata_dir = "/var/lib/garage/meta"
+      data_dir = "/var/lib/garage/data"
+
+      db_engine = "lmdb"
+      replication_mode = "1"
+
+      rpc_bind_addr = "[::]:3901"
+      rpc_public_addr = "127.0.0.1:3901"
+
+      [s3_api]
+      s3_region = "garage"
+      api_bind_addr = "[::]:3900"
+      root_domain = ".s3.haviv.pro"
+
+      [s3_web]
+      api_bind_addr = "[::]:3902"
+      root_domain = ".web.haviv.pro"
+
+      [admin]
+      api_bind_addr = "[::]:3903"
+
+volumes:
+  garage_meta:
+  garage_data:
