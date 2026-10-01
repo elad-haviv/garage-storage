@@ -16,9 +16,8 @@ s3_region = "garage"
 api_bind_addr = "[::]:3900"
 root_domain = ".s3.haviv.pro"
 
-[s3_web]
-api_bind_addr = "[::]:3902"
-root_domain = ".web.haviv.pro"
+# [s3_web] omitted: static website hosting is unused; also its `bind_addr`
+# key changed in Garage v2 and rejects the old `api_bind_addr` spelling.
 
 [admin]
 api_bind_addr = "[::]:3903"
