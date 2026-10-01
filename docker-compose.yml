@@ -11,7 +11,8 @@ services:
     image: dxflrs/garage:v2.3.0
     container_name: garage-storage
     restart: unless-stopped
-    command: server
+    # NOTE: no `command:` — the image's default CMD is ["/garage","server"];
+    # a custom command would REPLACE it and crash ("server: not found in $PATH")
     environment:
       - GARAGE_CONFIG_FILE=/etc/garage.toml
       - GARAGE_ADMIN_TOKEN=${GARAGE_ADMIN_TOKEN}
