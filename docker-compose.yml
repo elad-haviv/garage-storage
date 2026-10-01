@@ -22,6 +22,8 @@ services:
     volumes:
       - garage_meta:/var/lib/garage/meta
       - garage_data:/var/lib/garage/data
+    networks:
+      - coolify
     labels:
       - traefik.enable=true
       # ---- S3 API (path-style: https://s3.haviv.pro/<bucket>/<key>) ----
@@ -64,3 +66,7 @@ configs:
 volumes:
   garage_meta:
   garage_data:
+
+networks:
+  coolify:
+    external: true
