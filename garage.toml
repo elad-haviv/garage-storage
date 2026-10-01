@@ -1,0 +1,24 @@
+# Garage node configuration (delivered into the container by Coolify file storage)
+# GARAGE_RPC_SECRET and GARAGE_ADMIN_TOKEN arrive as container env vars —
+# Garage reads them directly, so they are not set here.
+
+metadata_dir = "/var/lib/garage/meta"
+data_dir = "/var/lib/garage/data"
+
+db_engine = "lmdb"
+replication_mode = "1"
+
+rpc_bind_addr = "[::]:3901"
+rpc_public_addr = "127.0.0.1:3901"
+
+[s3_api]
+s3_region = "garage"
+api_bind_addr = "[::]:3900"
+root_domain = ".s3.haviv.pro"
+
+[s3_web]
+api_bind_addr = "[::]:3902"
+root_domain = ".web.haviv.pro"
+
+[admin]
+api_bind_addr = "[::]:3903"
