@@ -17,9 +17,8 @@ services:
       - GARAGE_CONFIG_FILE=/etc/garage.toml
       - GARAGE_ADMIN_TOKEN=${GARAGE_ADMIN_TOKEN}
       - GARAGE_RPC_SECRET=${GARAGE_RPC_SECRET}
-    configs:
-      - source: garage_toml
-        target: /etc/garage.toml
+    # /etc/garage.toml is delivered as a Coolify "file storage" (content injected
+    # by the platform) — compose `configs:` is silently dropped by Coolify's parser
     volumes:
       - garage_meta:/var/lib/garage/meta
       - garage_data:/var/lib/garage/data
@@ -39,30 +38,6 @@ services:
       - traefik.http.routers.garage-admin.tls.certresolver=letsencrypt
       - traefik.http.routers.garage-admin.service=garage-admin
       - traefik.http.services.garage-admin.loadbalancer.server.port=3903
-
-configs:
-  garage_toml:
-    content: |
-      metadata_dir = "/var/lib/garage/meta"
-      data_dir = "/var/lib/garage/data"
-
-      db_engine = "lmdb"
-      replication_mode = "1"
-
-      rpc_bind_addr = "[::]:3901"
-      rpc_public_addr = "127.0.0.1:3901"
-
-      [s3_api]
-      s3_region = "garage"
-      api_bind_addr = "[::]:3900"
-      root_domain = ".s3.haviv.pro"
-
-      [s3_web]
-      api_bind_addr = "[::]:3902"
-      root_domain = ".web.haviv.pro"
-
-      [admin]
-      api_bind_addr = "[::]:3903"
 
 volumes:
   garage_meta:
