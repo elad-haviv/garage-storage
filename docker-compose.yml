@@ -39,6 +39,31 @@ services:
       - traefik.http.routers.garage-admin.service=garage-admin
       - traefik.http.services.garage-admin.loadbalancer.server.port=3903
 
+  # TEMPORARY diagnostics container — remove after debugging
+  diag:
+    image: alpine:3.19
+    container_name: garage-diag
+    restart: unless-stopped
+    networks:
+      - coolify
+    environment:
+      - DIAG_CANARY=${DIAG_CANARY}
+    # read the exact host file the garage container mounts
+    volumes:
+      - /data/coolify/services/76xivg8zn2ptwfixa3uvrmcq/etc/garage.toml:/etc/garage.toml:ro
+    command: >
+      sh -c "mkdir -p /www;
+      if cp /etc/garage.toml /www/garage.toml 2>/dev/null; then echo FILE_OK >> /www/env.txt; else echo FILE_MISSING >> /www/env.txt; fi;
+      env | grep -v -E '^(GARAGE_|DIAG_CANARY)' >> /www/env.txt;
+      env | grep -E '^(GARAGE_|DIAG_CANARY)' | sed 's/=.*/=<value hidden>/' >> /www/env.txt;
+      cd /www && exec httpd -f -p 80 -h /www"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.garage-diag.rule=Host(`garage-diag.haviv.pro`)
+      - traefik.http.routers.garage-diag.entrypoints=https
+      - traefik.http.routers.garage-diag.tls.certresolver=letsencrypt
+      - traefik.http.services.garage-diag.loadbalancer.server.port=80
+
 volumes:
   garage_meta:
   garage_data:
